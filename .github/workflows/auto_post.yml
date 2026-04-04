@@ -1,0 +1,44 @@
+name: Instagram Auto Post
+
+on:
+  schedule:
+    - cron: '0 */1 * * *'   # every 1 hours
+  workflow_dispatch:        # manual run button
+    inputs:
+      topic:
+        description: "News topic"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install requests pillow python-dotenv
+
+      - name: Run script
+        env:
+          NEWS_API_KEY: ${{secrets.NEWS_API_KEY}}
+          OPENROUTER_API_KEY: ${{secrets.OPENROUTER_API_KEY}}  
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          CLOUD_NAME: ${{ secrets.CLOUD_NAME }}
+          UPLOAD_PRESET: ${{ secrets.UPLOAD_PRESET }}
+          PAGE_NAME: ${{ secrets.PAGE_NAME }}
+        run: python main.py
