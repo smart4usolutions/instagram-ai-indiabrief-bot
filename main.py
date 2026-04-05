@@ -10,9 +10,12 @@ import sys
 news = get_news()
 
 insta_title = generate_instagram_title(news.get("description"))
+if insta_title != "Breaking News Update":
+    title = insta_title
+
 
 print("\nNEWS:", news["title"])
-print("\nInsta Title:", insta_title)
+print("\nInsta Title:", title)
 print("\nDISC:", news.get("description"))
 time.sleep(5)
 

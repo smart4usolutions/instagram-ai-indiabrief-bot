@@ -163,4 +163,4 @@ Rules:
 
     except Exception as e:
         print("Title generation error:", e)
-        return "🔥 Breaking News Update"
+        return "Breaking News Update"
