@@ -160,7 +160,8 @@ def create_post_image(title, image_url, category):
     gap = 30
 
     # CATEGORY SIZE
-    category_text = category.upper()
+    #category_text = category.upper()
+    category_text = "Daily Updates"
 
     cat_bbox = draw.textbbox((0, 0), category_text, font=font_category)
     cat_text_w = cat_bbox[2] - cat_bbox[0]
