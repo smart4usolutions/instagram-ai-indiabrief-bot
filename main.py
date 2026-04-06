@@ -52,4 +52,4 @@ print("Uploaded URL:", image_url)
 time.sleep(5)
 
 #Post to Instagram
-#post_to_instagram(image_url, caption)
+post_to_instagram(image_url, caption)
