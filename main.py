@@ -38,7 +38,7 @@ if not news.get("image"):
     sys.exit()
 image_path = create_post_image(
     #news["title"],
-    insta_title,
+    title,
     news["image"],
     news["category"]
 )
@@ -52,4 +52,4 @@ print("Uploaded URL:", image_url)
 time.sleep(5)
 
 #Post to Instagram
-post_to_instagram(image_url, caption)
+#post_to_instagram(image_url, caption)

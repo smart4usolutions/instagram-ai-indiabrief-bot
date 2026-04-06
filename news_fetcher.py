@@ -96,6 +96,8 @@ def get_news():
     if "articles" in data and len(data["articles"]) > 0:
 
         article = data["articles"][0]
+        if not article.get("urlToImage") and len(data["articles"]) > 1:
+            article = data["articles"][1]
 
         description = article.get("description") or ""
         content = article.get("content") or ""
