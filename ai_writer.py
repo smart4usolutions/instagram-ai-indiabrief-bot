@@ -38,7 +38,7 @@ Follow {pageName} for the latest global developments.
 
 Keyword: {keywords}
 
-#news #breakingnews #{category.lower()} #indianews #trending #dailynews
+#news #breakingnews #india #indianews #trending #dailynews
 """
 
     return caption
@@ -90,4 +90,4 @@ Avoid generic words
 
     except Exception as e:
         print("Title generation error:", e)
-        return "Breaking News Update"
+        return "India News Updates"
