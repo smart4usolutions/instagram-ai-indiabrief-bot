@@ -5,13 +5,53 @@ from dotenv import load_dotenv
 load_dotenv()
 
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-Ai_model = "qwen/qwen3.6-plus:free"
+# -----------------------------
+# 🔁 Reusable OpenRouter Caller
+# -----------------------------
+def call_openrouter(messages, max_tokens=30, temperature=0.7):
+    url = "https://openrouter.ai/api/v1/chat/completions"
 
-# topics
-topics = ""
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    models_to_try = [
+        "z-ai/glm-4.5-air:free",
+        "arcee-ai/trinity-large-preview:free",
+        "google/gemma-4-26b-a4b-it:free",
+        "stepfun/step-3.5-flash:free",
+        "nvidia/nemotron-3-super-120b-a12b:free"
+    ]
+
+    for model in models_to_try:
+        try:
+            payload = {
+                "model": model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature
+            }
+
+            response = requests.post(url, headers=headers, json=payload, timeout=15)
+            data = response.json()
+
+            if "choices" in data:
+                return data["choices"][0]["message"]["content"].strip()
+            else:
+                print(f"⚠️ Invalid response from {model}:", data)
+
+        except Exception as e:
+            print(f"❌ Model failed: {model} | Error: {e}")
+
+    return None  # All models failed
 
 
+# -----------------------------
+# 📰 Get Trending Topic
+# -----------------------------
 def get_news_topic():
     topic = os.getenv("TOPIC")
 
@@ -20,24 +60,15 @@ def get_news_topic():
         return topic
 
     print("Using AI topic (scheduled run)")
-    try:
-        url = "https://openrouter.ai/api/v1/chat/completions"
 
-        headers = {
-            "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
-            "Content-Type": "application/json"
-        }
-
-        payload = {
-            "model": Ai_model,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a real-time news trend detector."
-                },
-                {
-                    "role": "user",
-                    "content": """
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a real-time news trend detector."
+        },
+        {
+            "role": "user",
+            "content": """
 Identify the most important current trending news topic in India.
 
 Generate a concise search query for a news API.
@@ -48,35 +79,28 @@ Rules:
 - Keep it 3 to 4 words
 - Output ONLY the query (no explanation)
 """
-                }
-            ],
-            "max_tokens": 20,
-            "temperature": 0.7
         }
+    ]
 
-        response = requests.post(url, headers=headers, json=payload)
-        data = response.json()
+    try:
+        topic = call_openrouter(messages, max_tokens=20, temperature=0.7)
 
-        # Debug print (very useful)
-        if "choices" not in data:
-            print("OpenRouter Raw Response:", data)
-            return "india breaking news"  # fallback
+        if topic:
+            return topic
 
-        topic = data["choices"][0]["message"]["content"].strip()
-        return topic
+        print("⚠️ All models failed, using fallback")
+        return "india breaking news"
 
     except Exception as e:
         print("OpenRouter Error:", e)
-        return "india breaking news"  # fallback
+        return "india breaking news"
 
 
-
-
-
+# -----------------------------
+# 📰 Fetch News
+# -----------------------------
 def get_news():
-
-    #topic = get_news_topic()
-    topic = "india"
+    topic = get_news_topic()   # ✅ now uses AI + fallback
 
     print("Fetching news for topic:", topic)
 
@@ -90,56 +114,61 @@ def get_news():
         "apiKey": NEWS_API_KEY
     }
 
-    response = requests.get("https://newsapi.org/v2/everything", params=params)
-    data = response.json()
-
-    if "articles" in data and len(data["articles"]) > 0:
-
-        article = data["articles"][0]
-        if not article.get("urlToImage") and len(data["articles"]) > 1:
-            article = data["articles"][1]
-
-        description = article.get("description") or ""
-        content = article.get("content") or ""
-        source = article["source"]["name"]
-
-        return {
-            "title": article["title"],
-            "image": article["urlToImage"],
-            "category": topic,
-            "source":source,
-            "description": article["description"]
-        }
-
-    else:
-        print("News API Error:", data)
-
-        return {
-            "title": article["title"],
-            "description": article.get("description"),
-            "image": article["urlToImage"],
-            "category": topic
-        }
-
-def generate_instagram_title(description):
     try:
-        url = "https://openrouter.ai/api/v1/chat/completions"
+        response = requests.get("https://newsapi.org/v2/everything", params=params, timeout=10)
+        data = response.json()
 
-        headers = {
-            "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
-            "Content-Type": "application/json"
+        if "articles" in data and len(data["articles"]) > 0:
+
+            article = data["articles"][0]
+
+            # fallback if no image
+            if not article.get("urlToImage") and len(data["articles"]) > 1:
+                article = data["articles"][1]
+
+            return {
+                "title": article.get("title"),
+                "image": article.get("urlToImage"),
+                "category": topic,
+                "source": article.get("source", {}).get("name"),
+                "description": article.get("description") or ""
+            }
+
+        else:
+            print("⚠️ News API returned no articles:", data)
+
+            return {
+                "title": "No news found",
+                "description": "",
+                "image": None,
+                "category": topic,
+                "source": ""
+            }
+
+    except Exception as e:
+        print("❌ News API Error:", e)
+
+        return {
+            "title": "Error fetching news",
+            "description": "",
+            "image": None,
+            "category": topic,
+            "source": ""
         }
 
-        payload = {
-            "model": Ai_model,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are an expert social media copywriter."
-                },
-                {
-                    "role": "user",
-                    "content": f"""
+
+# -----------------------------
+# 📱 Generate Instagram Title
+# -----------------------------
+def generate_instagram_title(description):
+    messages = [
+        {
+            "role": "system",
+            "content": "You are an expert social media copywriter."
+        },
+        {
+            "role": "user",
+            "content": f"""
 Create a catchy Instagram-style news headline from this description:
 
 {description}
@@ -150,19 +179,32 @@ Rules:
 - No hashtags
 - Output ONLY the title
 """
-                }
-            ],
-            "max_tokens": 30,
-            "temperature": 0.9
         }
+    ]
 
-        response = requests.post(url, headers=headers, json=payload)
-        data = response.json()
+    try:
+        title = call_openrouter(messages, max_tokens=30, temperature=0.9)
 
-        title = data["choices"][0]["message"]["content"].strip()
+        if title:
+            return title
 
-        return title
+        return "Breaking News Update"
 
     except Exception as e:
-        print("Title generation error:", e)
+        print("❌ Title generation error:", e)
         return "Breaking News Update"
+
+
+# -----------------------------
+# 🚀 MAIN (for testing)
+# -----------------------------
+if __name__ == "__main__":
+    news = get_news()
+
+    print("\n📰 NEWS DATA:")
+    print(news)
+
+    insta_title = generate_instagram_title(news["description"])
+
+    print("\n📱 INSTAGRAM TITLE:")
+    print(insta_title)

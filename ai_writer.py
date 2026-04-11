@@ -43,27 +43,35 @@ Keyword: {keywords}
 
     return caption
 
-Ai_model = "qwen/qwen3.6-plus:free"
 
 def generate_instagram_keywords(description):
-    try:
-        url = "https://openrouter.ai/api/v1/chat/completions"
+    url = "https://openrouter.ai/api/v1/chat/completions"
 
-        headers = {
-            "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
-            "Content-Type": "application/json"
-        }
+    headers = {
+        "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
+        "Content-Type": "application/json"
+    }
 
-        payload = {
-            "model": Ai_model,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are an expert social media copywriter."
-                },
-                {
-                    "role": "user",
-                    "content": f"""
+    models_to_try = [
+        "z-ai/glm-4.5-air:free",
+        "arcee-ai/trinity-large-preview:free",
+        "google/gemma-4-26b-a4b-it:free",
+        "stepfun/step-3.5-flash:free",
+        "nvidia/nemotron-3-super-120b-a12b:free"
+    ]
+
+    for model in models_to_try:
+        try:
+            payload = {
+                "model": model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are an expert social media copywriter."
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""
 Extract relevant keywords from the given news article.
 Rules:
 Output only keywords (no extra text)
@@ -73,21 +81,31 @@ Separate with commas
 Avoid generic words
 
 {description}
-
 """
-                }
-            ],
-            "max_tokens": 30,
-            "temperature": 0.9
-        }
+                    }
+                ],
+                "max_tokens": 30,
+                "temperature": 0.9
+            }
 
-        response = requests.post(url, headers=headers, json=payload)
-        data = response.json()
+            response = requests.post(url, headers=headers, json=payload, timeout=15)
 
-        title = data["choices"][0]["message"]["content"].strip()
+            # Raise error for bad HTTP status
+            response.raise_for_status()
 
-        return title
+            data = response.json()
 
-    except Exception as e:
-        print("Title generation error:", e)
-        return "India News Updates"
+            # Validate response structure
+            if "choices" in data and len(data["choices"]) > 0:
+                content = data["choices"][0]["message"]["content"].strip()
+
+                # Ensure non-empty result
+                if content:
+                    print(f"✅ Success with model: {model}")
+                    return content
+
+        except Exception as e:
+            print(f"❌ Model failed: {model} | Error: {e}")
+
+    # Final fallback
+    return "India News Updates"
