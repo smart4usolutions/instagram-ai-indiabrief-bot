@@ -57,6 +57,12 @@ def load_image(image_url):
         img = Image.open(BytesIO(response.content)).convert("RGB")
         print("✅ Image loaded")
 
+        output_path = "generated_posts/raw_img.png"
+        os.makedirs("generated_posts", exist_ok=True)
+        img.save(output_path)
+
+        print("✅ RAW IMAGE SAVED:", output_path)
+
     except Exception as e:
         print("❌ Image load failed:", e)
         img = Image.new("RGB", (WIDTH, HEIGHT), (20, 20, 20))
@@ -75,6 +81,7 @@ def apply_bottom_gradient(image):
             value = 0
         else:
             value = int(255 * ((y - HEIGHT * 0.4) / (HEIGHT * 0.6)))
+            
 
         gradient.putpixel((0, y), value)
 
@@ -87,10 +94,10 @@ def apply_bottom_gradient(image):
 # ----------------------------
 # TEXT WRAP
 # ----------------------------
-def wrap_text(text, max_chars):
-    lines = []
-    for line in text.split("\n"):
-        lines.extend(textwrap.wrap(line, width=max_chars))
+def wrap_text(text, max_chars): 
+    lines = [] 
+    for line in text.split("\n"): 
+        lines.extend(textwrap.wrap(line, width=max_chars)) 
     return "\n".join(lines)
 
 
@@ -109,6 +116,49 @@ def get_dynamic_font(text, font_path, max_width, max_size=80, min_size=30):
     return ImageFont.truetype(font_path, min_size)
 
 
+#-----------------------------
+#Smart Fit
+#-----------------------------
+def smart_fit_image(image, target_width, target_height):
+    # ----------------------------
+    # 1. CREATE BLURRED BACKGROUND
+    # ----------------------------
+    bg = resize_cover(image, target_width, target_height)
+    bg = bg.filter(ImageFilter.GaussianBlur(13))
+
+    # Slight dark overlay for text readability
+    overlay = Image.new("RGBA", (target_width, target_height), (0, 0, 0, 120))
+    bg = bg.convert("RGBA")
+    bg = Image.alpha_composite(bg, overlay)
+
+    # ----------------------------
+    # 2. RESIZE FOREGROUND (FIT)
+    # ----------------------------
+    img_ratio = image.width / image.height
+    target_ratio = target_width / target_height
+
+    if img_ratio > target_ratio:
+        # Fit by width
+        new_width = target_width - 100  # padding
+        new_height = int(new_width / img_ratio)
+    else:
+        # Fit by height
+        new_height = target_height - 200  # space for text
+        new_width = int(new_height * img_ratio)
+
+    fg = image.resize((new_width, new_height), Image.LANCZOS)
+
+    # ----------------------------
+    # 3. CENTER IMAGE
+    # ----------------------------
+    x = (target_width - new_width) // 2
+    y = (target_height - new_height) // 2 - 200  # slight upward bias
+
+    bg.paste(fg, (x, y))
+
+    return bg.convert("RGB")
+
+
 # ----------------------------
 # MAIN FUNCTION
 # ----------------------------
@@ -116,8 +166,10 @@ def create_post_image(title, image_url, category):
 
     # Load & prepare image
     bg = load_image(image_url)
-    bg = resize_cover(bg, WIDTH, HEIGHT)
-    bg = bg.filter(ImageFilter.GaussianBlur(2))
+    # bg = resize_cover(bg, WIDTH, HEIGHT)
+    # bg = bg.filter(ImageFilter.GaussianBlur(2))
+    bg = smart_fit_image(bg, WIDTH, HEIGHT)
+    bg = apply_bottom_gradient(bg)
     bg = apply_bottom_gradient(bg)
 
     draw = ImageDraw.Draw(bg)

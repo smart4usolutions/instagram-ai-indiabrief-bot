@@ -100,9 +100,9 @@ Rules:
 # 📰 Fetch News
 # -----------------------------
 def get_news():
-    topic = get_news_topic()   # ✅ now uses AI + fallback
-
-    print("Fetching news for topic:", topic)
+    #topic = get_news_topic()   # ✅ now uses AI + fallback
+    topic = "india"
+    print("📰Fetching news for topic:", topic)
 
     query = " AND ".join(topic.split())
 
@@ -175,7 +175,7 @@ Create a catchy Instagram-style news headline from this description:
 
 Rules:
 - Make it engaging and scroll-stopping
-- Max 10 to 12 words
+- Max to 18 words
 - No hashtags
 - Output ONLY the title
 """
