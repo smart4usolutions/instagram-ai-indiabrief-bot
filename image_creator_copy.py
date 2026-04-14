@@ -230,7 +230,7 @@ def create_post_image(title, image_url, category, inset_url=None):
         width=2
     )
 
-    footer_text = "@ai.indiabrief"
+    footer_text = "Follow @ai.indiabrief for latest updates"
 
     bbox = draw.textbbox((0, 0), footer_text, font=font_footer)
     text_w = bbox[2] - bbox[0]
