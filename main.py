@@ -1,7 +1,7 @@
 from news_fetcher import get_news
 from news_fetcher import generate_instagram_title
 from ai_writer import generate_caption
-from image_creator import create_post_image
+from image_creator_copy import create_post_image
 from upload_image import upload_image
 from instagram_post import post_to_instagram
 import time
@@ -42,6 +42,7 @@ image_path = create_post_image(
     news["image"],
     news["category"]
 )
+print(title,news["image"],news["category"])
 
 print("\nIMAGE CREATED:", image_path)
 time.sleep(5)

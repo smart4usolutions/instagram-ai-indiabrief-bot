@@ -101,7 +101,7 @@ Rules:
 # -----------------------------
 def get_news():
     #topic = get_news_topic()   # ✅ now uses AI + fallback
-    topic = "india"
+    topic = "India"
     print("📰Fetching news for topic:", topic)
 
     query = " AND ".join(topic.split())

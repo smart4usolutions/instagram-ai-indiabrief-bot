@@ -348,3 +348,4 @@ def create_post_image(title, image_url, category):
     print("✅ IMAGE CREATED:", output_path)
 
     return output_path
+create_post_image("Indian Woman Lands German Product Manager Job Without Speaking German, Stuns Social Media", "https://img.etimg.com/thumb/msid-130232485,width-1200,height-630,imgsize-2034780,overlay-economictimes/articleshow.jpg", "India")
