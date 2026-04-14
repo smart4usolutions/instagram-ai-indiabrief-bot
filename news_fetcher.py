@@ -164,47 +164,62 @@ def generate_instagram_title(description):
     messages = [
         {
             "role": "system",
-            "content": "You are an expert social media copywriter."
+            "content": "You write viral, high-engagement Instagram news headlines."
         },
         {
             "role": "user",
             "content": f"""
-Create a catchy Instagram-style news headline from this description:
+Turn this news into a VIRAL Instagram headline:
 
 {description}
 
-Rules:
-- Make it engaging and scroll-stopping
-- Max to 18 words
-- No hashtags
-- Output ONLY the title
+STRICT RULES:
+- Max 12–16 words
+- Use POWER words (shocking, massive, big, huge, exposed, unbelievable, etc.)
+- Create curiosity or tension
+- Make it sound emotional or surprising
+- Avoid boring/news tone
+- NO hashtags
+- NO emojis
+- Use sentence case
+
+STYLE EXAMPLES:
+- "This decision could change everything for Indian voters"
+- "Massive update just dropped and people are shocked"
+- "This move by the government is raising serious questions"
+
+Output ONLY the headline.
 """
         }
     ]
 
     try:
-        title = call_openrouter(messages, max_tokens=30, temperature=0.9)
+        for _ in range(2):  # try 2 times
+            title = call_openrouter(messages, max_tokens=40, temperature=1)
+            if title:
+                return title
 
-        if title:
-            return title
+        if title and len(title.split()) > 4:
+            return title.strip()
 
-        return "Breaking News Update"
+        # fallback
+        return generate_fallback_title(description)
 
     except Exception as e:
         print("❌ Title generation error:", e)
-        return "Breaking News Update"
+        return generate_fallback_title(description)
+    
+    
+def generate_fallback_title(description):
+    text = description.strip()
 
+    # Take first strong sentence
+    if "." in text:
+        text = text.split(".")[0]
 
-# -----------------------------
-# 🚀 MAIN (for testing)
-# -----------------------------
-if __name__ == "__main__":
-    news = get_news()
+    words = text.split()
 
-    print("\n📰 NEWS DATA:")
-    print(news)
+    # shorten
+    short = " ".join(words[:14])
 
-    insta_title = generate_instagram_title(news["description"])
-
-    print("\n📱 INSTAGRAM TITLE:")
-    print(insta_title)
+    return short + "..."

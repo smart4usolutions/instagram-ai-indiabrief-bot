@@ -2,7 +2,6 @@ import os
 import requests
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
-import textwrap
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -28,7 +27,7 @@ def load_image(image_url):
 
 
 # ----------------------------
-# RESIZE IMAGE (COVER)
+# RESIZE IMAGE
 # ----------------------------
 def resize_cover(image, target_width, target_height):
     img_ratio = image.width / image.height
@@ -50,179 +49,153 @@ def resize_cover(image, target_width, target_height):
 
 
 # ----------------------------
-# ADD CIRCLE IMAGE
+# TEXT WRAP (PIXEL BASED)
 # ----------------------------
-def add_circle_image(canvas, image_url):
-    try:
-        img = load_image(image_url)
-        img = resize_cover(img, 200, 200)
+def wrap_text_by_pixels(draw, text, font, max_width):
+    words = text.split()
+    lines = []
+    current_line = ""
 
-        mask = Image.new("L", (200, 200), 0)
-        draw_mask = ImageDraw.Draw(mask)
-        draw_mask.ellipse((0, 0, 200, 200), fill=255)
+    for word in words:
+        test_line = current_line + " " + word if current_line else word
 
-        circle = Image.new("RGBA", (200, 200))
-        circle.paste(img, (0, 0), mask)
+        bbox = draw.textbbox((0, 0), test_line, font=font)
+        width = bbox[2] - bbox[0]
 
-        canvas.paste(circle, (WIDTH - 240, 40), mask)
-    except:
-        pass
+        if width <= max_width:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word
+
+    if current_line:
+        lines.append(current_line)
+
+    return "\n".join(lines)
 
 
 # ----------------------------
 # MAIN FUNCTION
 # ----------------------------
-def create_post_image(title, image_url, category, inset_url=None):
+def create_post_image(title, image_url, category, discption, inset_url=None):
 
-    # ----------------------------
-    # BASE CANVAS
-    # ----------------------------
     canvas = Image.new("RGB", (WIDTH, HEIGHT), (0, 0, 0))
     draw = ImageDraw.Draw(canvas)
 
-    # ----------------------------
-    # MAIN IMAGE
-    # ----------------------------
-    main_img = load_image(image_url)
-    # ----------------------------
-    # IMAGE WITH PADDING (LIKE REF)
-    # ----------------------------
-    padding_x = 60
+    # ---------------- IMAGE ----------------
+    padding_x = 40   # reduced padding
     padding_top = 60
 
     img_width = WIDTH - (padding_x * 2)
     img_height = int(HEIGHT * 0.5)
 
+    main_img = load_image(image_url)
     main_img = resize_cover(main_img, img_width, img_height)
 
-    # Position
     img_x = padding_x
     img_y = padding_top
 
     canvas.paste(main_img, (img_x, img_y))
 
-    # ----------------------------
-    # WHITE BORDER (OUTSIDE IMAGE)
-    # ----------------------------
-    border_thickness = 10
-
     draw.rectangle(
-        [
-            img_x - border_thickness,
-            img_y - border_thickness,
-            img_x + img_width + border_thickness,
-            img_y + img_height + border_thickness
-        ],
+        [img_x - 10, img_y - 10, img_x + img_width + 10, img_y + img_height + 10],
         outline="white",
-        width=border_thickness
+        width=10
     )
 
-
-    # ----------------------------
-    # INSET IMAGE
-    # ----------------------------
-    if inset_url:
-        add_circle_image(canvas, inset_url)
-
-    # ----------------------------
-    # FONTS
-    # ----------------------------
+    # ---------------- FONTS ----------------
     font_bold_path = os.path.join(BASE_DIR, "fonts/ARIALBD.TTF")
     font_regular_path = os.path.join(BASE_DIR, "fonts/ARIAL.TTF")
 
-    try:
-        font_category = ImageFont.truetype(font_bold_path, 40)
-        font_headline_big = ImageFont.truetype(font_bold_path, 60)
-        font_headline_small = ImageFont.truetype(font_bold_path, 52)
-        font_footer = ImageFont.truetype(font_regular_path, 32)
-    except:
-        font_category = ImageFont.load_default()
-        font_headline_big = ImageFont.load_default()
-        font_headline_small = ImageFont.load_default()
-        font_footer = ImageFont.load_default()
+    # ---------------- CATEGORY ----------------
+    cat_y = img_y + img_height + 20
 
-    # ----------------------------
-    # CATEGORY TAG
-    # ----------------------------
     category_text = category.upper()
-    cat_y = int(HEIGHT * 0.55) - 30
+    font_category = ImageFont.truetype(font_bold_path, 38)
 
-    draw.rectangle(
-        [WIDTH // 2 - 100, cat_y, WIDTH // 2 + 100, cat_y + 50],
-        fill=(0, 0, 0)
-    )
+    bbox = draw.textbbox((0, 0), category_text, font=font_category)
+    text_w = bbox[2] - bbox[0]
 
     draw.text(
-        (WIDTH // 2 - 50, cat_y + 8),
+        ((WIDTH - text_w) // 2, cat_y),
         category_text,
         font=font_category,
-        fill=(255, 180, 0),
-        align="center"
+        fill=(255, 180, 0)
     )
 
-    # ----------------------------
-# HEADLINE SPLIT
-# ----------------------------
-    words = title.split()
+    # ---------------- TEXT AREA ----------------
+    top_y = cat_y + 60
+    bottom_limit = HEIGHT - 140
+    max_height = bottom_limit - top_y
 
-    if len(words) > 6:
-        first_line = " ".join(words[:6])
-        rest_text = " ".join(words[6:])
+    discption = " ".join(discption.split()[:30])  # limit length
+
+    best = None
+
+    for title_size in range(90, 40, -2):
+        for desc_size in range(42, 22, -2):
+
+            font_title = ImageFont.truetype(font_bold_path, title_size)
+            font_desc = ImageFont.truetype(font_regular_path, desc_size)
+
+            max_width = WIDTH - 80   # LESS SIDE PADDING
+
+            wrapped_title = wrap_text_by_pixels(draw, title, font_title, max_width)
+            wrapped_desc = wrap_text_by_pixels(draw, discption, font_desc, max_width)
+
+            title_bbox = draw.multiline_textbbox((0, 0), wrapped_title, font=font_title, spacing=8)
+            desc_bbox = draw.multiline_textbbox((0, 0), wrapped_desc, font=font_desc, spacing=6)
+
+            title_h = title_bbox[3] - title_bbox[1]
+            desc_h = desc_bbox[3] - desc_bbox[1]
+
+            gap = 40  # space between title & description
+            total_h = title_h + gap + desc_h
+
+            if total_h <= max_height:
+                best = (font_title, font_desc, wrapped_title, wrapped_desc, title_h)
+                break
+
+        if best:
+            break
+
+    if not best:
+        font_title = ImageFont.truetype(font_bold_path, 48)
+        font_desc = ImageFont.truetype(font_regular_path, 26)
+        wrapped_title = title
+        wrapped_desc = discption
+        title_h = 120
     else:
-        first_line = title
-        rest_text = ""
+        font_title, font_desc, wrapped_title, wrapped_desc, title_h = best
 
-    first_line = textwrap.fill(first_line, width=22)
-    rest_text = textwrap.fill(rest_text, width=26)
-
-    text_y = cat_y + 80
-
-    # ----------------------------
-    # CALCULATE CENTER POSITION
-    # ----------------------------
-    def draw_centered_multiline(draw, text, y, font, fill):
-        bbox = draw.multiline_textbbox((0, 0), text, font=font, spacing=10)
-        text_width = bbox[2] - bbox[0]
-
-        x = (WIDTH - text_width) // 2
+    # ---------------- DRAW CENTER ----------------
+    def draw_center(text, y, font, color, spacing):
+        bbox = draw.multiline_textbbox((0, 0), text, font=font, spacing=spacing)
+        w = bbox[2] - bbox[0]
+        x = (WIDTH - w) // 2
 
         draw.multiline_text(
             (x, y),
             text,
             font=font,
-            fill=fill,
-            spacing=10,
+            fill=color,
+            spacing=spacing,
             align="center"
         )
 
-        return bbox[3] - bbox[1]  # height
+    # ---------------- DRAW TEXT ----------------
+    draw_center(wrapped_title, top_y, font_title, (255, 180, 0), 8)
 
-
-    # ----------------------------
-    # DRAW FIRST LINE (YELLOW)
-    # ----------------------------
-    h1 = draw_centered_multiline(
-        draw,
-        first_line,
-        text_y,
-        font_headline_big,
-        (255, 180, 0)
+    draw_center(
+        wrapped_desc,
+        top_y + title_h + 40,
+        font_desc,
+        (220, 220, 220),
+        6
     )
 
-    # ----------------------------
-    # DRAW SECOND LINE (WHITE)
-    # ----------------------------
-    draw_centered_multiline(
-        draw,
-        rest_text,
-        text_y + h1 + 20,
-        font_headline_small,
-        "white"
-    )
-# ----------------------------
-# BOTTOM BRANDING (CENTERED & HIGHER)
-# ----------------------------
-    line_y = HEIGHT - 80
+    # ---------------- FOOTER ----------------
+    line_y = HEIGHT - 100
 
     draw.line(
         [(120, line_y), (WIDTH - 120, line_y)],
@@ -231,6 +204,7 @@ def create_post_image(title, image_url, category, inset_url=None):
     )
 
     footer_text = "Follow @ai.indiabrief for latest updates"
+    font_footer = ImageFont.truetype(font_regular_path, 30)
 
     bbox = draw.textbbox((0, 0), footer_text, font=font_footer)
     text_w = bbox[2] - bbox[0]
@@ -242,16 +216,11 @@ def create_post_image(title, image_url, category, inset_url=None):
         fill="white"
     )
 
-
-    # ----------------------------
-    # SAVE
-    # ----------------------------
+    # ---------------- SAVE ----------------
     output_path = "generated_posts/post.png"
     os.makedirs("generated_posts", exist_ok=True)
-
     canvas.save(output_path)
 
     print("✅ IMAGE CREATED:", output_path)
 
     return output_path
-create_post_image("Indian Woman Lands German Product Manager Job Without Speaking German, Stuns Social Media", "https://img.etimg.com/thumb/msid-130232485,width-1200,height-630,imgsize-2034780,overlay-economictimes/articleshow.jpg", "India")

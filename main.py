@@ -36,11 +36,19 @@ time.sleep(5)
 if not news.get("image"):
     print("No image found. Stopping execution.")
     sys.exit()
+# image_path = create_post_image(
+#     #news["title"],
+#     title,
+#     news["image"],
+#     news["category"]
+# )
+
 image_path = create_post_image(
     #news["title"],
     title,
     news["image"],
-    news["category"]
+    news["category"],
+    news.get("description")
 )
 print(title,news["image"],news["category"])
 
