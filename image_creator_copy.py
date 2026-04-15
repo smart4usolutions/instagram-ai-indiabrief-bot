@@ -200,7 +200,7 @@ def create_post_image(title, image_url, category, discption, inset_url=None):
     draw.line(
         [(120, line_y), (WIDTH - 120, line_y)],
         fill=(80, 80, 80),
-        width=2
+        width=3
     )
 
     footer_text = "Follow @ai.indiabrief for latest updates"

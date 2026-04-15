@@ -18,12 +18,19 @@ def call_openrouter(messages, max_tokens=30, temperature=0.7):
         "Content-Type": "application/json"
     }
 
+    # models_to_try = [
+    #     "z-ai/glm-4.5-air:free",
+    #     "arcee-ai/trinity-large-preview:free",
+    #     "google/gemma-4-26b-a4b-it:free",
+    #     "stepfun/step-3.5-flash:free",
+    #     "nvidia/nemotron-3-super-120b-a12b:free"
+    # ]
     models_to_try = [
-        "z-ai/glm-4.5-air:free",
-        "arcee-ai/trinity-large-preview:free",
-        "google/gemma-4-26b-a4b-it:free",
-        "stepfun/step-3.5-flash:free",
-        "nvidia/nemotron-3-super-120b-a12b:free"
+        "openrouter/free",
+        "openrouter/free",
+        "openrouter/free",
+        "openrouter/free",
+        "openrouter/free"
     ]
 
     for model in models_to_try:
