@@ -73,13 +73,52 @@ def wrap_text_by_pixels(draw, text, font, max_width):
 
     return "\n".join(lines)
 
+def get_template_style(template):
+    if template == "urgent":
+        return {
+            "bg": (75, 10, 10),
+            "title_color": (255, 255, 255),
+            "highlight_color": (220, 38, 38),
+            "secondary" : (120, 120, 120),
+            "tag": "BREAKING"
+        }
+
+    elif template == "growth":
+        return {
+            "bg": (10, 65, 10),
+            "title_color": (230, 255, 240),
+            "highlight_color": (34, 197, 94),
+            "secondary" : (120, 140, 130),
+            "tag": "MARKET"
+        }
+
+    elif template == "shocking":
+        return {
+            "bg": (100, 85, 20),
+            "title_color": (255, 255, 255),
+            "highlight_color": (255, 204, 0),
+            "secondary" : (140, 140, 140),
+            "tag": "SHOCKING"
+        }
+
+    else:  # explainer
+        return {
+            "bg": (10, 45, 90),
+            "title_color": (230, 240, 255),
+            "highlight_color": (96, 165, 250),
+            "secondary" : (130, 150, 180),
+            "tag": "EXPLAINED"
+        }
 
 # ----------------------------
 # MAIN FUNCTION
 # ----------------------------
-def create_post_image(title, image_url, category, discption, inset_url=None):
+# def create_post_image(title, image_url, category, discption, inset_url=None):
+def create_post_image(title, image_url, category, description, template, inset_url=None):
 
-    canvas = Image.new("RGB", (WIDTH, HEIGHT), (0, 0, 0))
+    style = get_template_style(template)
+
+    canvas = Image.new("RGB", (WIDTH, HEIGHT), style["bg"])
     draw = ImageDraw.Draw(canvas)
 
     # ---------------- IMAGE ----------------
@@ -107,6 +146,16 @@ def create_post_image(title, image_url, category, discption, inset_url=None):
     font_bold_path = os.path.join(BASE_DIR, "fonts/ARIALBD.TTF")
     font_regular_path = os.path.join(BASE_DIR, "fonts/ARIAL.TTF")
 
+    #----------------- Template Style -----------
+
+    # TAG
+    tag_font = ImageFont.truetype(font_bold_path, 36)
+
+    draw.rectangle([40, 40, 260, 90], fill=style["highlight_color"])
+
+    draw.text((60, 50), style["tag"], font=tag_font, fill="black")
+
+
     # ---------------- CATEGORY ----------------
     cat_y = img_y + img_height + 20
 
@@ -128,7 +177,7 @@ def create_post_image(title, image_url, category, discption, inset_url=None):
     bottom_limit = HEIGHT - 140
     max_height = bottom_limit - top_y
 
-    discption = " ".join(discption.split()[:30])  # limit length
+    description = " ".join(description.split()[:30])  # limit length
 
     best = None
 
@@ -141,7 +190,7 @@ def create_post_image(title, image_url, category, discption, inset_url=None):
             max_width = WIDTH - 80   # LESS SIDE PADDING
 
             wrapped_title = wrap_text_by_pixels(draw, title, font_title, max_width)
-            wrapped_desc = wrap_text_by_pixels(draw, discption, font_desc, max_width)
+            wrapped_desc = wrap_text_by_pixels(draw, description, font_desc, max_width)
 
             title_bbox = draw.multiline_textbbox((0, 0), wrapped_title, font=font_title, spacing=8)
             desc_bbox = draw.multiline_textbbox((0, 0), wrapped_desc, font=font_desc, spacing=6)
@@ -163,7 +212,7 @@ def create_post_image(title, image_url, category, discption, inset_url=None):
         font_title = ImageFont.truetype(font_bold_path, 48)
         font_desc = ImageFont.truetype(font_regular_path, 26)
         wrapped_title = title
-        wrapped_desc = discption
+        wrapped_desc = description
         title_h = 120
     else:
         font_title, font_desc, wrapped_title, wrapped_desc, title_h = best
@@ -184,7 +233,7 @@ def create_post_image(title, image_url, category, discption, inset_url=None):
         )
 
     # ---------------- DRAW TEXT ----------------
-    draw_center(wrapped_title, top_y, font_title, (255, 180, 0), 8)
+    draw_center(wrapped_title, top_y, font_title, style["title_color"], 8)
 
     draw_center(
         wrapped_desc,
@@ -224,3 +273,5 @@ def create_post_image(title, image_url, category, discption, inset_url=None):
     print("✅ IMAGE CREATED:", output_path)
 
     return output_path
+
+#create_post_image("Renault's shocking plan to make India one of their top global markets by 2030", "https://bl-i.thgim.com/public/incoming/e4jjed/article70868662.ece/alternates/LANDSCAPE_1200/2026-04-14T170723Z_173063768_RC28ADA5NOMR_RTRMADP_3_RENAULT-JOBS.JPG", "India", "The company also wants India to rank among Renault's top three global markets by 2030, and aims ‌to capture about 5% of market share in the country by the end ‌of the decade","explainer")

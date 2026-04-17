@@ -19,6 +19,7 @@ def call_openrouter(messages, max_tokens=30, temperature=0.7):
     }
 
     models_to_try = [
+        "google/gemma-4-26b-a4b-it:free",
         "openrouter/free",
         "openrouter/free",
         "openrouter/free",
@@ -169,25 +170,35 @@ def generate_instagram_title(description):
         {
             "role": "user",
             "content": f"""
-Turn this news into a VIRAL Instagram headline:
+Write ONE viral Instagram headline based on the news below.
 
+NEWS:
 {description}
+OUTPUT FORMAT (STRICT):
+- 12 to 16 words ONLY
+- Exactly ONE sentence
+- Sentence case (only first letter capitalized, rest lowercase)
+- No hashtags, no emojis
 
-STRICT RULES:
-- MUST be between 12 and 16 words (reject if not)
-- MUST be a single sentence
-- MUST use sentence case (only first letter capitalized)
-- MUST include at least one power/emotional word (shocking, massive, explosive, unbelievable, etc.)
-- MUST create curiosity or tension
-- MUST NOT include hashtags or emojis
-- MUST NOT sound like formal news reporting
+STYLE REQUIREMENTS:
+- Must feel emotional, surprising, or curiosity-driven
+- Must NOT sound like formal news
+- Must NOT start with phrases like:
+  "The company", "According to", "Reports say", "In a statement"
+- Must include at least one strong/power word (shocking, massive, unexpected, explosive, bold, surprising)
 
-If you break ANY rule, regenerate internally before responding.
+WRITING PATTERN (follow this structure):
+- Start with a hook (This move..., What just happened..., This decision...)
+- End with curiosity or impact (…could change everything, …is raising big questions)
 
-STYLE EXAMPLES:
-- "This decision could change everything for Indian voters"
-- "Massive update just dropped and people are shocked"
-- "This move by the government is raising serious questions"
+BAD OUTPUT EXAMPLE (DO NOT DO THIS):
+"The company announced expansion plans in India for future growth"
+
+GOOD OUTPUT EXAMPLE:
+"This unexpected move by renault could reshape india’s future auto market"
+
+FINAL RULE:
+If the output does not follow ALL rules, rewrite it before responding.
 
 Output ONLY the headline.
 """
@@ -224,3 +235,48 @@ def generate_fallback_title(description):
     short = " ".join(words[:14])
 
     return short + "..."
+
+def classify_template(description):
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a strict classifier. You ONLY return one word."
+        },
+        {
+            "role": "user",
+            "content": f"""
+Classify this news into EXACTLY one category:
+
+urgent
+growth
+shocking
+explainer
+
+Definitions:
+- urgent = breaking news, government, accidents, immediate updates
+- growth = business, stocks, economy, money
+- shocking = unexpected, controversy, surprising events
+- explainer = analysis, why it matters, deeper meaning
+
+RULES:
+- Output ONLY ONE WORD from the list above
+- Do NOT explain
+- Do NOT add anything else
+- If unsure, choose the closest match
+
+News:
+{description}
+"""
+        }
+    ]
+
+    result = call_openrouter(messages, max_tokens=5, temperature=0)
+
+    if result:
+        cleaned = result.strip().lower()
+
+        # strict filtering
+        if cleaned in ["urgent", "growth", "shocking", "explainer"]:
+            return cleaned
+
+    return "shocking"  # safe fallback

@@ -1,5 +1,6 @@
 from news_fetcher import get_news
 from news_fetcher import generate_instagram_title
+from news_fetcher import classify_template
 from ai_writer import generate_caption
 from image_creator_copy import create_post_image
 from upload_image import upload_image
@@ -15,10 +16,13 @@ if insta_title != "Breaking News Update":
 else:
     title = news["title"]
 
+template = classify_template(news["description"])
+
 
 print("\nNEWS:", news["title"])
 print("\nInsta Title:", title)
 print("\nDISC:", news.get("description"))
+print("\nTemplate: ",template)
 time.sleep(5)
 
 
@@ -36,19 +40,14 @@ time.sleep(5)
 if not news.get("image"):
     print("No image found. Stopping execution.")
     sys.exit()
-# image_path = create_post_image(
-#     #news["title"],
-#     title,
-#     news["image"],
-#     news["category"]
-# )
 
 image_path = create_post_image(
     #news["title"],
     title,
     news["image"],
     news["category"],
-    news.get("description")
+    news.get("description"),
+    template
 )
 print(title,news["image"],news["category"])
 
@@ -56,9 +55,9 @@ print("\nIMAGE CREATED:", image_path)
 time.sleep(5)
 
 #upload image
-image_url = upload_image(image_path)
-print("Uploaded URL:", image_url)
+#image_url = upload_image(image_path)
+#print("Uploaded URL:", image_url)
 time.sleep(5)
 
 #Post to Instagram
-post_to_instagram(image_url, caption)
+#post_to_instagram(image_url, caption)
