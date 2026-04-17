@@ -18,13 +18,6 @@ def call_openrouter(messages, max_tokens=30, temperature=0.7):
         "Content-Type": "application/json"
     }
 
-    # models_to_try = [
-    #     "z-ai/glm-4.5-air:free",
-    #     "arcee-ai/trinity-large-preview:free",
-    #     "google/gemma-4-26b-a4b-it:free",
-    #     "stepfun/step-3.5-flash:free",
-    #     "nvidia/nemotron-3-super-120b-a12b:free"
-    # ]
     models_to_try = [
         "openrouter/free",
         "openrouter/free",
@@ -181,14 +174,15 @@ Turn this news into a VIRAL Instagram headline:
 {description}
 
 STRICT RULES:
-- Max 12–16 words
-- Use POWER words (shocking, massive, big, huge, exposed, unbelievable, etc.)
-- Create curiosity or tension
-- Make it sound emotional or surprising
-- Avoid boring/news tone
-- NO hashtags
-- NO emojis
-- Use sentence case
+- MUST be between 12 and 16 words (reject if not)
+- MUST be a single sentence
+- MUST use sentence case (only first letter capitalized)
+- MUST include at least one power/emotional word (shocking, massive, explosive, unbelievable, etc.)
+- MUST create curiosity or tension
+- MUST NOT include hashtags or emojis
+- MUST NOT sound like formal news reporting
+
+If you break ANY rule, regenerate internally before responding.
 
 STYLE EXAMPLES:
 - "This decision could change everything for Indian voters"
@@ -202,7 +196,7 @@ Output ONLY the headline.
 
     try:
         for _ in range(2):  # try 2 times
-            title = call_openrouter(messages, max_tokens=40, temperature=1)
+            title = call_openrouter(messages, max_tokens=40, temperature=0.6)
             if title:
                 return title
 
