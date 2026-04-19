@@ -55,9 +55,9 @@ print("\nIMAGE CREATED:", image_path)
 time.sleep(5)
 
 #upload image
-#image_url = upload_image(image_path)
-#print("Uploaded URL:", image_url)
+image_url = upload_image(image_path)
+print("Uploaded URL:", image_url)
 time.sleep(5)
 
 #Post to Instagram
-#post_to_instagram(image_url, caption)
+post_to_instagram(image_url, caption)

@@ -252,18 +252,34 @@ def create_post_image(title, image_url, category, description, template, inset_u
         width=3
     )
 
-    footer_text = "Follow @ai.indiabrief for latest updates"
     font_footer = ImageFont.truetype(font_regular_path, 30)
 
-    bbox = draw.textbbox((0, 0), footer_text, font=font_footer)
-    text_w = bbox[2] - bbox[0]
+    # Split text
+    text1 = "Follow "
+    text2 = "@ai.indiabrief"
+    text3 = " for latest updates"
 
-    draw.text(
-        ((WIDTH - text_w) // 2, line_y + 20),
-        footer_text,
-        font=font_footer,
-        fill="white"
-    )
+    # Measure each part
+    bbox1 = draw.textbbox((0, 0), text1, font=font_footer)
+    bbox2 = draw.textbbox((0, 0), text2, font=font_footer)
+    bbox3 = draw.textbbox((0, 0), text3, font=font_footer)
+
+    w1 = bbox1[2] - bbox1[0]
+    w2 = bbox2[2] - bbox2[0]
+    w3 = bbox3[2] - bbox3[0]
+
+    total_w = w1 + w2 + w3
+
+    # Start X (centered)
+    start_x = (WIDTH - total_w) // 2
+    y = line_y + 20
+
+    # Draw each part
+    draw.text((start_x, y), text1, font=font_footer, fill="white")
+
+    draw.text((start_x + w1, y), text2, font=font_footer, fill=(255, 255, 0))  # Yellow
+
+    draw.text((start_x + w1 + w2, y), text3, font=font_footer, fill="white")
 
     # ---------------- SAVE ----------------
     output_path = "generated_posts/post.png"
