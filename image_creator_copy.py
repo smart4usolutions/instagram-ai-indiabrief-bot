@@ -244,7 +244,7 @@ def create_post_image(title, image_url, category, description, template, inset_u
     )
 
     # ---------------- FOOTER ----------------
-    line_y = HEIGHT - 100
+    line_y = HEIGHT - 80
 
     draw.line(
         [(120, line_y), (WIDTH - 120, line_y)],

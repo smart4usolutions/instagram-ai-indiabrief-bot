@@ -41,4 +41,4 @@ jobs:
           CLOUD_NAME: ${{ secrets.CLOUD_NAME }}
           UPLOAD_PRESET: ${{ secrets.UPLOAD_PRESET }}
           PAGE_NAME: ${{ secrets.PAGE_NAME }}
-        run: python main.py
+        run: python auto_post.py
